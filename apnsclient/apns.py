@@ -161,7 +161,7 @@ class Message(object):
     DEFAULT_PRIORITY = 10
 
     def __init__(self, tokens, alert=None, badge=None, sound=None, content_available=None,
-                 expiry=None, payload=None, priority=DEFAULT_PRIORITY, extra=None,
+                 category=None, expiry=None, payload=None, priority=DEFAULT_PRIORITY, extra=None,
                  **extra_kwargs):
         """ The push notification to one or more device tokens.
 
@@ -185,6 +185,7 @@ class Message(object):
                 - badge (int or str): badge number over the application icon or special value such as "increment".
                 - sound (str): sound file to play on arrival.
                 - content_available (int): set to 1 to indicate new content is available.
+                - category (str): set category identifier.
                 - expiry (int, datetime or timedelta): timestamp when message will expire.
                 - payload (dict or str): JSON-compatible dictionary with the
                    complete message payload. If supplied, it is given instead
@@ -213,6 +214,7 @@ class Message(object):
             self.badge = aps.get("badge")
             self.sound = aps.get("sound")
             self.content_available = aps.get("content-available")
+            self.category = aps.get("category")
             self.extra = dict([(k, v) for (k, v) in six.iteritems(payload) if k != 'aps'])
         elif payload is None:
             # normal message initialization
@@ -220,6 +222,7 @@ class Message(object):
             self.badge = badge
             self.sound = sound
             self.content_available = content_available
+            self.category = category
             _extra = {}
             if extra:
                 _extra.update(extra)
@@ -286,7 +289,7 @@ class Message(object):
             }
 
         return dict([(key, getattr(self, key)) for key in ('tokens', 'alert', 'badge',
-                    'sound', 'content_available', 'expiry', 'priority', 'extra')])
+                    'sound', 'content_available', 'category', 'expiry', 'priority', 'extra')])
     
     def __setstate__(self, state):
         """ Overwrite message state with given kwargs. """
@@ -303,13 +306,14 @@ class Message(object):
                 self.badge = aps.get("badge")
                 self.sound = aps.get("sound")
                 self.content_available = aps.get("content-available")
+                self.category = aps.get("category")
                 self.extra = dict([(k, v) for (k, v) in six.iteritems(self._payload) if k != 'aps'])
         else:
             self._payload = None
             for key, val in six.iteritems(state):
                 if key in ('tokens', 'expiry', 'priority'): # already set
                     pass
-                elif key in ('alert', 'badge', 'sound', 'content_available'):
+                elif key in ('alert', 'badge', 'sound', 'content_available', 'category'):
                     setattr(self, key, state[key])
                 elif key == 'extra':
                     self.extra.update(state[key])
@@ -343,6 +347,9 @@ class Message(object):
 
         if self.content_available is not None:
             aps['content-available'] = self.content_available
+
+        if self.category is not None:
+            aps['category'] = self.category
 
         ret = {
             'aps': aps,
