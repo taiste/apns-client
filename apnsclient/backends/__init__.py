@@ -112,7 +112,7 @@ class BaseBackend(object):
 
     def get_new_connection(self, address, certificate, timeout=None):
         """ Open a new connection.
-        
+
             :Arguments:
                 - address (tuple): target (host, port).
                 - certificate (:class:`Certificate`): certificate instance.
@@ -159,8 +159,12 @@ class BaseBackend(object):
         """ Close conections on destruction. """
         # NOTE: global package datetime can become None if session is stored in
         # a global variable and being garbage collected with the rest of the module.
-        if datetime is not None:
-            self.outdate(datetime.timedelta())
+        try:
+            if datetime is not None:
+                self.outdate(datetime.timedelta())
+        except TypeError as e:
+            # Handle datetime-originated TypeErrors during (at least) testing
+            pass
 
 
 class BaseConnection(object):
@@ -178,7 +182,7 @@ class BaseConnection(object):
 
     def is_outdated(self, delta):
         """ Returns True if ``delta`` time has not been passed since the last use.
-        
+
             :Arguments:
                 - delta (datetime.timedelta): last use TTL.
         """
@@ -204,7 +208,7 @@ class BaseConnection(object):
     def close(self):
         """ Close connection and free underlying resources. Does nothing if
             connection is already closed.
-            
+
             .. warning::
                 This method is not allowed to throw any exceptions, except
                 those that indicate catastrophic events (such as
